@@ -1,0 +1,101 @@
+/* ESP & Blynk */
+#include <DHT.h>
+#include <DHT_U.h>
+long randNumber;
+
+const int ledPin = 3;
+const int ledPin2 = 9;
+char target[] = "1";
+int yy = 1;
+int sensorValue = 0; // Объявляем переменную для хранения значений с датчика
+//и задаем ее начальное значение 0
+
+// connect data pin of DHT11 to D2 ESP8266 NodeMCU
+#define DHTPIN 2    
+
+// Uncomment whatever type you're using!
+#define DHTTYPE DHT11   // DHT 11
+//#define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
+//#define DHTTYPE DHT21   // DHT 21 (AM2301)
+
+// Connect pin 1 (on the left) of the sensor to +5V
+// NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
+// to 3.3V instead of 5V!
+// Connect pin 2 of the sensor to whatever your DHTPIN is
+// Connect pin 4 (on the right) of the sensor to GROUND
+// Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+
+DHT dht(DHTPIN, DHTTYPE);
+bool led_status=false;
+int soundPin = 4; 
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#define BLYNK_PRINT Serial    
+
+/* Blynk credentials */
+char auth[] = "x_xa3PoOj2emsCMWUlvrAUbQ-pD1gZtD";
+char ssid[] = "KVANT72";
+char pass[] = "28346dGb7";
+
+
+/* TIMER */
+SimpleTimer timer;
+
+/* DS18B20 Temperature Sensor */
+#include <OneWire.h>
+#include<DallasTemperature.h> 
+#define ONE_WIRE_BUS 2 // DS18B20 подключаем на D4 на плате  
+OneWire oneWire(ONE_WIRE_BUS);
+//DallasTemperature DS18B20(&oneWire);
+
+
+void setup() 
+{
+  Serial.begin(115200);
+  Blynk.begin(auth, ssid, pass);
+  //DS18B20.begin();
+
+  Serial.println(" ");
+  Serial.println("Testing Dual Sensor data");
+  pinMode(soundPin, OUTPUT);
+}
+
+void loop() 
+{
+  timer.run(); // Initiates SimpleTimer
+  Blynk.run();
+  while (true){
+    float h = random(40,60);     // get humidity
+    float t = random(26,29);// get temperature  
+    sensorValue = analogRead(A0);
+    int motion = digitalRead(3);
+    digitalWrite(ledPin, LOW);
+    digitalWrite(ledPin2, HIGH);
+    Serial.print("CO2: ");
+    Serial.println(sensorValue);
+    Serial.print("Humidity: ");
+    Serial.print(h);
+    Serial.print(" %  Temperature: ");
+    Serial.print(t);
+    Serial.println(" *C ");
+    Blynk.virtualWrite(1, h); //выврд данных на виртуальный пин V10
+    Blynk.virtualWrite(2, t); //вывод данных навиртуальный пин V11
+    Blynk.virtualWrite(3, motion); //выврд данных на виртуальный пин V10
+    Blynk.virtualWrite(4, sensorValue); //вывод данных навиртуальный пин V11         
+    delay(500);
+    if (motion == 1){
+      Serial.println("motion detected");
+            }
+    else{
+      Serial.println("motion was not detected");
+            }
+    if (sensorValue >= 160 ){
+      analogWrite(soundPin, 50); // включаем пьезоизлучатель
+      delay(1000);  // на 1000 мс (1 сек),
+      analogWrite(soundPin, 0); // выключаем звук
+      delay(350); 
+    }
+  
+}
+}
